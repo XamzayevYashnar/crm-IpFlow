@@ -2,7 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { conf } from "./config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { INestApplication } from "@nestjs/common";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
 
 export class App {
 
@@ -16,6 +16,8 @@ export class App {
         const document = this.swagger(app);
 
         SwaggerModule.setup(`${this.api}/docs`, app, document);
+
+        app.useGlobalPipes(new ValidationPipe);
 
         app.listen(conf.PORT ?? 3050, ()=>{
             console.log(`Server: http://localhost:${conf.PORT}/${this.api}/`);

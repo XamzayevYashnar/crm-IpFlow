@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.3.7",
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
     "@nestjs/platform-express": "^12.0.1",
@@ -28,13 +29,18 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/otp-generator": "^4.0.2",
     "@types/pg": "^8.23.1",
+    "@types/redis": "^4.0.11",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
+    "ioredis": "^6.0.0",
+    "otp-generator": "^4.0.1",
     "pg": "^8.23.0",
     "prisma": "^7.10.0",
+    "redis": "^6.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

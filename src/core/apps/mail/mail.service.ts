@@ -2,8 +2,8 @@ import { BadRequestException, Inject, Injectable, InternalServerErrorException, 
 import { REDIS_CLIENT } from "../../config/redis/redis.module";
 import Redis from "ioredis";
 import { MailerService } from "@nestjs-modules/mailer";
-import { generateOTP } from "../../infrastructure/helper/otp-generator";
-import { getEmailHtml } from "../../infrastructure/public";
+import { generateOTP } from "../../../infrastructure/helper/otp-generator";
+import { getEmailHtml } from "../../../common/public";
 
 @Injectable()
 export class MailService {

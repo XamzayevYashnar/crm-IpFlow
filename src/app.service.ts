@@ -1,8 +1,9 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { conf } from "./config";
+import { conf } from "./core/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
+import cookieParser from "cookie-parser";
 
 export class App {
 
@@ -11,17 +12,18 @@ export class App {
     static async main(){
         const app = await NestFactory.create(AppModule);
 
+        app.use(cookieParser());
+
         app.setGlobalPrefix(`${this.api}`);
+        app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
 
         const document = this.swagger(app);
-
         SwaggerModule.setup(`${this.api}/docs`, app, document);
 
-        app.useGlobalPipes(new ValidationPipe);
-
-        app.listen(conf.PORT ?? 3050, ()=>{
-            console.log(`Server: http://localhost:${conf.PORT}/${this.api}/`);
-            console.log(`Swagger: http://localhost:${conf.PORT}/${this.api}/docs`);
+        const port = conf.PORT ?? 3050;
+        await app.listen(port, () => {
+            console.log(`Server: http://localhost:${port}/${this.api}/`);
+            console.log(`Swagger: http://localhost:${port}/${this.api}/docs`);
         });
     }
 
@@ -30,7 +32,7 @@ export class App {
             .setTitle("IpFlow API Title")
             .setDescription("The API description for IpFlow project")
             .setVersion("1.0")
-            .addCookieAuth()
+            .addCookieAuth('accessToken')
             .addBasicAuth()
             .build();
 

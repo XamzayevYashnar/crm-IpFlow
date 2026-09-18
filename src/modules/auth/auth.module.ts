@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { BaseModule } from '../../core/service/base.module';
-import { MailModule } from '../../core/mail/mail.module';
+import { BaseModule } from '../../core/apps/service/base.module';
+import { MailModule } from '../../core/apps/mail/mail.module';
 
 @Module({
   imports: [BaseModule, MailModule],

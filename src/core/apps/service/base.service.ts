@@ -1,12 +1,12 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "../../config/database/prisma.service";
-import { IUser } from "../../common/interface/interface-user";
+import { IUser } from "../../../common/interface/interface-user";
 
 @Injectable()
 export class BaseService {
 
     constructor (
-        private readonly prisma: PrismaService,
+        readonly prisma: PrismaService,
     ){}
 
     async existsEmail(email: string): Promise<IUser> {

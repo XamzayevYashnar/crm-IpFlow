@@ -1,16 +1,16 @@
 import { Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
-import { PrismaClient, Role, UserStatus } from "../../../generated/prisma/client";
+import { PrismaClient, Role, UserStatus } from "../../../../generated/prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { conf } from "..";
-import { Crypt } from "../../infrastructure/lib/Crypt";
+import { Crypt } from "../../../infrastructure/lib/Crypt";
 
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
 
     private readonly logger = new Logger(PrismaService.name);
 
     constructor() {
-        const pool = new Pool({ connectionString: conf.DATABASE_URL });
+        const pool = new Pool({ connectionString: String(conf.DATABASE_URL) });
         const adapter = new PrismaPg(pool);
 
         super({ adapter });
@@ -26,11 +26,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
         if (!superAdmin){
 
-            const hashPassword: string = await Crypt.hash(conf.ADMIN.password);
+            const hashPassword: string = await Crypt.hash(String(conf.ADMIN.password));
 
             await this.user.create({
                 data: {
-                    email: conf.ADMIN.email,
+                    email: String(conf.ADMIN.email),
                     password: hashPassword,   
                     role: Role.SUPER_ADMIN, 
                     status: UserStatus.ACTIVE,                 

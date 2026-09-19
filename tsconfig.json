@@ -17,6 +17,13 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
-    "strictPropertyInitialization": false
-  }
+    "strictPropertyInitialization": false,
+
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "./",
+    "paths": {
+      "@prisma-generated/*": ["generated/prisma/*"]
+    }
+  },
+  "exclude": ["node_modules", "generated", "dist"]
 }

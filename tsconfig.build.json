@@ -1,9 +1,12 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {},
-  "include": [
-    "src/**/*",
-    "generated/**/*"
-  ],
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "include": ["src", "generated"],
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "jest.config.ts",
+    "prisma7.config.ts"
+  ]
 }

@@ -1,5 +1,5 @@
 generator client {
-  provider     = "prisma-client-js"
+  provider     = "prisma-client"
   output       = "../generated/prisma"
   moduleFormat = "cjs"
 }
@@ -37,6 +37,11 @@ enum AssignmentStatus {
 enum MovementType {
   IN
   OUT
+}
+
+enum MaterialUnit {
+  KG
+  METR
 }
 
 model User {
@@ -166,7 +171,7 @@ model WorkAssignment {
 model Material {
   id             Int      @id @default(autoincrement())
   name           String   @db.VarChar(100)
-  unit           String   @db.VarChar(20) 
+  unit           MaterialUnit 
   currentBalance Decimal  @default(0.00) @db.Decimal(12, 2)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

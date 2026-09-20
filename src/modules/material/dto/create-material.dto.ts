@@ -12,16 +12,9 @@ export class CreateMaterialDto {
     unit!: MaterialUnit;
 
     @IsOptional()
-    @IsEnum(MovementType, { message: "Type is incorrect. Allowed values: IN, OUT" })
-    type!: MovementType;
-
     @ValidateIf(o => o.type !== undefined)
     @IsNotEmpty({ message: "Quantity is required when type is provided" })
     @IsDecimal({}, { message: "Quantity must be a valid decimal number (e.g. 10.50)" })
     @Type(() => String) 
-    quantity!: string; 
-
-    @IsOptional()
-    @IsString({ message: "Reason must be a string" })
-    reason?: string;
+    currentBalance?: string; 
 }

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "../../config/database/prisma.service";
 import { IUser } from "../../../common/interface/interface-user";
 
@@ -20,5 +20,15 @@ export class BaseService {
 
         return isExists;
     };
+
+    async checkUserRole(roleId: number){
+        const userRole = await this.prisma.userRole.findUnique({ where: { id: roleId } });
+        
+        if (!userRole){
+            throw new ForbiddenException("You have'nt got access");
+        }
+
+        return userRole;
+    }
     
 }

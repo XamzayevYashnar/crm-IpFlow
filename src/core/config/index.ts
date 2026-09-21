@@ -31,4 +31,6 @@ export const conf = {
         REFRESH_KEY: String(process.env.REFRESH_TOKEN_KEY),
         REFRESH_TIME: String(process.env.REFRESH_TOKEN_TIME),
     },
+
+    ROLE_NAME: String(process.env.ROLE_NAME),
 }

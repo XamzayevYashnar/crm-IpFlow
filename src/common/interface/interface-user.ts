@@ -6,7 +6,7 @@ export interface IUser {
     fullName: string | null,
     email: string,
     password: string,
-    role: Role,
+    roleId: number,
     status: UserStatus,
     hourlyPrice: Decimal | null,
     createdAt: Date,

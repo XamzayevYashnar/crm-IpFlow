@@ -1,49 +1,85 @@
-import { Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
-import { PrismaClient, Role, UserStatus } from "../../../../generated/prisma/client";
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { PrismaClient, UserStatus, PermissionAction } from "../../../../generated/prisma/client"; 
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { conf } from "..";
 import { Crypt } from "../../../infrastructure/lib/Crypt";
 
+@Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
+  private readonly pool: Pool;
 
-    private readonly logger = new Logger(PrismaService.name);
+  constructor() {
+    const pool = new Pool({ connectionString: String(conf.DATABASE_URL) });
+    const adapter = new PrismaPg(pool);
+    
+    super({ adapter });
+    this.pool = pool;
+  }
 
-    constructor() {
-        const pool = new Pool({ connectionString: String(conf.DATABASE_URL) });
-        const adapter = new PrismaPg(pool);
+  async onModuleInit() {
+    try {
+      await this.$connect();
+      this.logger.log("DATABASE CONNECTED");
 
-        super({ adapter });
-    }
-
-    async onModuleInit() {
-        await this.$connect();
-        this.logger.log("DATABASE CONNECTED");
-
-        const superAdmin = await this.user.findFirst({
-            where: { role: Role.SUPER_ADMIN }
+      this.logger.log("Initializing permissions from enum...");
+      const actions = Object.values(PermissionAction);
+      
+      for (const action of actions) {
+        await this.permission.upsert({
+          where: { action: action },
+          update: {},
+          create: { action: action },
         });
+      }
+      this.logger.log("Permissions successfully synchronized");
 
-        if (!superAdmin){
+      let roleExists = await this.userRole.findUnique({
+        where: { name: conf.ROLE_NAME },
+        include: { permissions: true },
+      });
 
-            const hashPassword: string = await Crypt.hash(String(conf.ADMIN.password));
+      if (!roleExists) {
+        roleExists = await this.userRole.create({
+          data: { 
+            name: conf.ROLE_NAME,
+            permissions: {
+              connect: actions.map(action => ({ action }))
+            }
+          },
+          include: { permissions: true }
+        });
+        this.logger.log(`UserRole (${conf.ROLE_NAME}) successfully created with all permissions`);
+      }
 
-            await this.user.create({
-                data: {
-                    email: String(conf.ADMIN.email),
-                    password: hashPassword,   
-                    role: Role.SUPER_ADMIN, 
-                    status: UserStatus.ACTIVE,                 
-                }
-            });
-            
-        };
+      let superAdmin = await this.user.findUnique({
+        where: { email: String(conf.ADMIN.email) }
+      });
 
-        this.logger.log(superAdmin);
+      if (!superAdmin) {
+        const hashPassword = await Crypt.hash(String(conf.ADMIN.password));
+        superAdmin = await this.user.create({
+          data: {
+            email: String(conf.ADMIN.email),
+            password: hashPassword,
+            roleId: roleExists.id,
+            status: UserStatus.ACTIVE,
+          }
+        });
+        this.logger.log("Super Admin account successfully created");
+      }
+
+      this.logger.log(`Current Super Admin ID: ${superAdmin.id}`);
+    } catch (error) {
+      this.logger.error("Database seed and initialization failed", error);
+      throw error;
     }
+  }
 
-    async onModuleDestroy() {
-        await this.$disconnect();
-        this.logger.warn("DATABASE DISCONNECTED")
-    }
+  async onModuleDestroy() {
+    await this.$disconnect();
+    await this.pool.end();
+    this.logger.warn("DATABASE DISCONNECTED");
+  }
 }

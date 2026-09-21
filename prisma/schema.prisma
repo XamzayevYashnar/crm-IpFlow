@@ -14,6 +14,14 @@ enum Role {
   STAFF
 }
 
+enum PermissionAction {
+  CREATE_USER
+  READ_USER
+  UPDATE_USER
+  DELETE_USER
+  MANAGE_ROLES
+}
+
 enum UserStatus {
   ACTIVE
   INACTIVE
@@ -46,11 +54,12 @@ enum MaterialUnit {
 
 model User {
   id Int @id @default(autoincrement())
-
-  fullName    String?    @db.VarChar(100)
   email       String     @unique @db.VarChar(254)
   password    String
-  role        Role
+  fullName    String?    @db.VarChar(100)
+  avatar      String?
+  roleId      Int
+  role        UserRole   @relation(fields: [roleId], references: [id])
   status      UserStatus @default(INACTIVE)
   hourlyPrice Decimal?   @db.Decimal(12, 2)
 
@@ -60,6 +69,19 @@ model User {
   attendances         Attendance[]     @relation("UserAttendances")
   updatedAttendances  Attendance[]     @relation("SuperAdminAttendanceUpdates")
   workAssignments     WorkAssignment[]
+}
+
+model UserRole {
+  id Int @id @default(autoincrement())
+  name String @unique
+  users User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id Int @id @default(autoincrement())
+  action PermissionAction @unique
+  roles UserRole[]
 }
 
 model Attendance {

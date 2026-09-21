@@ -1,6 +1,6 @@
 import { IsDecimal, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from "class-validator";
-import { MaterialUnit, MovementType } from "../../../../generated/prisma";
 import { Type } from "class-transformer";
+import { MaterialUnit } from "../../../../generated/prisma/client"
 
 export class CreateMaterialDto {
     @IsNotEmpty({ message: "Name is required" })

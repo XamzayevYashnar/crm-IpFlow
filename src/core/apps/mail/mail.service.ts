@@ -39,7 +39,7 @@ export class MailService {
             html: getEmailHtml(code) 
         }); 
 
-        return { success: true, messageId: info.messageId }; 
+        return { success: true, messageId: info.messageId, code }; 
         } catch (error) {
         const key = this.getOtpKey(cleanEmail);
         await this.redis.del(key); 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in';
 import { BaseService } from '../../core/apps/service/base.service';
 import { Crypt } from '../../infrastructure/lib/Crypt';
@@ -25,9 +25,9 @@ export class AuthService extends BaseService {
 
     await Crypt.compare(dto.password, user.password);
 
-    await this.mail.sendOtp(dto.email);
+    const result = await this.mail.sendOtp(dto.email);
 
-    return successRes({ message: "OTP code was successfully sent in gmail" }, 200)
+    return successRes({ message: "OTP code was successfully sent in gmail", test: result }, 200)
   }
 
   async verifyOtp(dto: VerifyOtpDto, res: Response){
@@ -35,7 +35,9 @@ export class AuthService extends BaseService {
 
     await this.mail.verifyOtp(dto.email, dto.code);
 
-    const payload = generatePayload(user.id, user.role, user.status);
+    const userRole = await this.checkUserRole(user.roleId);
+
+    const payload = generatePayload(user.id, userRole.name, user.status);
 
     const { accessToken, refreshToken } = await Token.getToken(payload);
 

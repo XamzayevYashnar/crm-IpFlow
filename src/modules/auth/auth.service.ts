@@ -47,4 +47,18 @@ export class AuthService extends BaseService {
 
     return successRes({ user: cleanUser }, 201);
   }
+
+  async refreshToken(token: string, res: Response){
+    const data = await Token.verifyToken(token, 'refresh');
+    await this.existsId(data.sub);
+
+    const userRole = await this.checkUserRoleById(data.sub);
+    const payload = generatePayload(data.sub, userRole.name, data.status);
+
+    Token.clearCookie(res);
+    const result = await Token.getToken(payload);
+    Token.setCookie(res, result.accessToken, result.refreshToken);
+
+    return successRes({ message: "Token success updated" }, 201);
+  }
 }

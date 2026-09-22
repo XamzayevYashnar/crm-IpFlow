@@ -21,6 +21,23 @@ export class BaseService {
         return isExists;
     };
 
+    async existsId(id: number) {
+        if (!id) {
+            throw new UnauthorizedException("Please logIn before continue!");
+        }
+
+        const isExists = await this.prisma.user.findUnique({
+            where: { id: id }
+        });
+
+        if (!isExists){
+            throw new UnauthorizedException("user is not exists!");
+        }
+
+        return isExists;
+    };
+
+
     async checkUserRole(roleId: number){
         const userRole = await this.prisma.userRole.findUnique({ where: { id: roleId } });
         
@@ -29,6 +46,17 @@ export class BaseService {
         }
 
         return userRole;
-    }
+    }  
     
+    async checkUserRoleById(id: number){
+        const user = await this.prisma.user.findUnique({ where: { id } });
+
+        const userRole = await this.prisma.userRole.findUnique({ where: { id: user?.roleId } })
+        
+        if (!userRole){
+            throw new ForbiddenException("You have'nt got access");
+        }
+
+        return userRole;
+    }  
 }

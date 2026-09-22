@@ -4,6 +4,8 @@ import { conf } from '../../core/config/index';
 import { UnauthorizedException } from '@nestjs/common';
 import { Response } from 'express';
 import { IToken } from "../../common/interface/interface-token"
+import { User } from '@prisma-generated/client';
+import { IUser } from 'src/common/interface/interface-user';
 
 export class Token {
   private static readonly jwt = new JwtService();
@@ -22,7 +24,7 @@ export class Token {
     return { accessToken, refreshToken };
   }
 
-  static async verifyToken(token: string, type: string): Promise<object> {
+  static async verifyToken(token: string, type: string) {
     try {
       const verifiedData = await this.jwt.verifyAsync(token, {
         secret:

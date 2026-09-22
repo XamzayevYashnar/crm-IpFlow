@@ -21,7 +21,11 @@ export class MaterialService {
   }
 
   async findAll(){
-    const materials = await this.prisma.material.findMany();
+    const materials = await this.prisma.material.findMany({
+      include: {
+        inventoryMovements: true,
+      }
+    });
 
     if (materials.length === 0) throw new NotFoundException("Materials is empty");
 
@@ -29,13 +33,16 @@ export class MaterialService {
   }
 
   async findOne(id: number){
-    const isExists = await this.prisma.material.findUnique({
-      where: { id }
+    const material = await this.prisma.material.findUnique({
+      where: { id },
+      include: {
+        inventoryMovements: true,
+      }
     });
 
-    if (!isExists) throw new NotFoundException('Material is not found');
+    if (!material) throw new NotFoundException('Material is not found');
 
-    return successRes({isExists}, 200);
+    return successRes({ material }, 200);
   }
 
   async update(dto: UpdateMaterialDto, id: number){

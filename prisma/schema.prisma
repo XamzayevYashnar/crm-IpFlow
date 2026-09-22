@@ -53,35 +53,33 @@ enum MaterialUnit {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  email       String     @unique @db.VarChar(254)
-  password    String
-  fullName    String?    @db.VarChar(100)
-  avatar      String?
-  roleId      Int
-  role        UserRole   @relation(fields: [roleId], references: [id])
-  status      UserStatus @default(INACTIVE)
-  hourlyPrice Decimal?   @db.Decimal(12, 2)
-
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt 
-
+  id                  Int              @id @default(autoincrement())
+  email               String           @unique @db.VarChar(254)
+  password            String
+  fullName            String?          @db.VarChar(100)
+  avatar              String?
+  roleId              Int
+  role                UserRole         @relation(fields: [roleId], references: [id])
+  status              UserStatus       @default(INACTIVE)
+  hourlyPrice         Decimal?         @db.Decimal(12, 2)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
   attendances         Attendance[]     @relation("UserAttendances")
   updatedAttendances  Attendance[]     @relation("SuperAdminAttendanceUpdates")
   workAssignments     WorkAssignment[]
 }
 
 model UserRole {
-  id Int @id @default(autoincrement())
-  name String @unique
-  users User[]
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  users       User[]
   permissions Permission[]
 }
 
 model Permission {
-  id Int @id @default(autoincrement())
-  action PermissionAction @unique
-  roles UserRole[]
+  id      Int              @id @default(autoincrement())
+  action  PermissionAction @unique
+  roles   UserRole[]
 }
 
 model Attendance {
@@ -90,44 +88,40 @@ model Attendance {
   checkIn     DateTime  @default(now())
   checkOut    DateTime?
   totalHours  Decimal?  @db.Decimal(5, 2)
-  updatedById Int?      
-
+  updatedById Int?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
   user        User      @relation("UserAttendances", fields: [userId], references: [id], onDelete: Cascade)
   updatedBy   User?     @relation("SuperAdminAttendanceUpdates", fields: [updatedById], references: [id])
 }
 
 model ProductModel {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(100)
-  sku       String   @unique @db.VarChar(50)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id              Int              @id @default(autoincrement())
+  name            String           @db.VarChar(100)
+  sku             String           @unique @db.VarChar(50)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   modelOperations ModelOperation[]
   orders          Order[]
+  modelMaterials  ModelMaterial[]
 }
 
 model Operation {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(100)
-  description String?  @db.VarChar(255)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id              Int              @id @default(autoincrement())
+  name            String           @db.VarChar(100)
+  description     String?          @db.VarChar(255)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   modelOperations ModelOperation[]
 }
 
 model ModelOperation {
-  id          Int      @id @default(autoincrement())
-  modelId     Int
-  operationId Int
-  stepOrder   Int      
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id           Int              @id @default(autoincrement())
+  modelId      Int
+  operationId  Int
+  stepOrder    Int
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   productModel ProductModel     @relation(fields: [modelId], references: [id], onDelete: Cascade)
   operation    Operation        @relation(fields: [operationId], references: [id], onDelete: Cascade)
   assignments  WorkAssignment[]
@@ -142,40 +136,37 @@ model Customer {
   phone     String?  @db.VarChar(30)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   orders    Order[]
 }
 
 model Order {
-  id         Int      @id @default(autoincrement())
-  customerId Int
-  modelId    Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
+  id           Int          @id @default(autoincrement())
+  customerId   Int
+  modelId      Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   customer     Customer     @relation(fields: [customerId], references: [id])
   productModel ProductModel @relation(fields: [modelId], references: [id])
   orderBatches OrderBatch[]
 }
 
 model OrderBatch {
-  id            Int         @id @default(autoincrement())
-  orderId       Int
-  batchNumber   Int         @unique @default(autoincrement()) 
-  color         String      @db.VarChar(50)
-  size          String      @db.VarChar(30)
-  totalQuantity Int
-  status        BatchStatus @default(NEW)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
+  id              Int              @id @default(autoincrement())
+  orderId         Int
+  batchNumber     Int              @unique @default(autoincrement())
+  color           String           @db.VarChar(50)
+  size            String           @db.VarChar(30)
+  totalQuantity   Int
+  status          BatchStatus      @default(NEW)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
   workAssignments WorkAssignment[]
 }
 
 model WorkAssignment {
   id               Int              @id @default(autoincrement())
-  userId           Int              
+  userId           Int
   orderBatchId     Int
   modelOperationId Int
   quantityAssigned Int
@@ -184,21 +175,20 @@ model WorkAssignment {
   completedAt      DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-
-  user           User           @relation(fields: [userId], references: [id])
-  orderBatch     OrderBatch     @relation(fields: [orderBatchId], references: [id])
-  modelOperation ModelOperation @relation(fields: [modelOperationId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
+  orderBatch       OrderBatch       @relation(fields: [orderBatchId], references: [id])
+  modelOperation   ModelOperation   @relation(fields: [modelOperationId], references: [id])
 }
 
 model Material {
-  id             Int      @id @default(autoincrement())
-  name           String   @db.VarChar(100)
-  unit           MaterialUnit 
-  currentBalance Decimal  @default(0.00) @db.Decimal(12, 2)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
+  id                 Int                 @id @default(autoincrement())
+  name               String              @db.VarChar(100)
+  unit               MaterialUnit
+  currentBalance     Decimal             @default(0.00) @db.Decimal(12, 2)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   inventoryMovements InventoryMovement[]
+  modelMaterials     ModelMaterial[]
 }
 
 model InventoryMovement {
@@ -208,6 +198,16 @@ model InventoryMovement {
   quantity   Decimal      @db.Decimal(12, 2)
   reason     String?      @db.VarChar(255)
   createdAt  DateTime     @default(now())
-
   material   Material     @relation(fields: [materialId], references: [id], onDelete: Cascade)
+}
+
+model ModelMaterial {
+  id             Int          @id @default(autoincrement())
+  materialId     Int
+  productId      Int
+  quantityNeeded Decimal      @db.Decimal(12, 2)
+  material       Material     @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  product        ProductModel @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, materialId])
 }

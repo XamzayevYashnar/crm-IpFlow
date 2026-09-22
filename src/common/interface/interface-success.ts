@@ -1,4 +1,4 @@
-export interface ISuccess {
+export interface ISuccess<T = any> {
   statusCode: number;
-  data: object;
+  data: T;
 }

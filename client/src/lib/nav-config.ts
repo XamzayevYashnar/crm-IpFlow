@@ -24,8 +24,8 @@ export const navGroups: NavGroup[] = [
   {
     title: "Mahsulot",
     items: [
-      { label: "Modellar", to: "/models", ready: false },
-      { label: "Operatsiyalar", to: "/operations", ready: false },
+      { label: "Modellar", to: "/models", ready: true },
+      { label: "Operatsiyalar", to: "/operations", ready: true },
     ],
   },
   {

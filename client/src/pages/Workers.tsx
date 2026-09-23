@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Plus, Pencil, Ban, KeyRound } from "lucide-react";
+import { ExternalLink, Plus, Pencil, Ban, KeyRound, Wallet } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { blockWorker, createWorker, listWorkers, resetWorkerPin, updateWorker } from "../api/workers";
+import { createPayment, workerEarnings, workerPayments } from "../api/payments";
 import type { Worker, WorkerCreateValues, WorkerStatus, WorkerUpdateValues } from "../types/worker";
+import type { Earnings, Payment } from "../types/terminal";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Badge } from "../components/ui/Badge";
@@ -31,6 +33,7 @@ export default function Workers() {
   const [blocking, setBlocking] = useState<Worker | null>(null);
   const [resettingId, setResettingId] = useState<number | null>(null);
   const [pinToShow, setPinToShow] = useState<{ name: string; pin: string } | null>(null);
+  const [balanceFor, setBalanceFor] = useState<Worker | null>(null);
 
   async function load() {
     setLoading(true);
@@ -138,6 +141,13 @@ export default function Workers() {
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button
+                        onClick={() => setBalanceFor(w)}
+                        title="Balans va to'lovlar"
+                        className="text-slate-400 hover:text-green-600"
+                      >
+                        <Wallet size={16} />
+                      </button>
+                      <button
                         onClick={() => handleResetPin(w)}
                         disabled={resettingId === w.id}
                         title="PIN kodni yangilash"
@@ -210,7 +220,131 @@ export default function Workers() {
           </Button>
         </Modal>
       )}
+
+      {balanceFor && <WorkerBalanceModal worker={balanceFor} onClose={() => setBalanceFor(null)} />}
     </div>
+  );
+}
+
+function WorkerBalanceModal({ worker, onClose }: { worker: Worker; onClose: () => void }) {
+  const [earnings, setEarnings] = useState<Earnings | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
+  const { register, handleSubmit, reset, formState } = useForm<{ amount: number; note?: string }>();
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const [e, p] = await Promise.all([workerEarnings(worker.id), workerPayments(worker.id)]);
+      setEarnings(e);
+      setPayments(p);
+    } catch (err) {
+      setError((err as ApiError).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [worker.id]);
+
+  async function onPay(values: { amount: number; note?: string }) {
+    setPaying(true);
+    try {
+      await createPayment(worker.id, Number(values.amount), values.note);
+      toast.success("To'lov qayd etildi");
+      reset({ amount: undefined, note: "" });
+      load();
+    } catch (e) {
+      toast.error((e as ApiError).message);
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  return (
+    <Modal title={`Balans — ${worker.fullName ?? worker.phone}`} onClose={onClose}>
+      <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+        {loading ? (
+          <div className="py-6 text-center text-sm text-slate-400">Yuklanmoqda...</div>
+        ) : error ? (
+          <div className="py-6 text-center text-sm text-red-500">{error}</div>
+        ) : earnings ? (
+          <>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-lg border border-slate-200 p-2">
+                <div className="text-xs text-slate-500">Ishlangan</div>
+                <div className="text-sm font-semibold text-slate-900">{earnings.totalEarned}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 p-2">
+                <div className="text-xs text-slate-500">To'langan</div>
+                <div className="text-sm font-semibold text-slate-900">{earnings.totalPaid}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 p-2">
+                <div className="text-xs text-slate-500">Qoldiq</div>
+                <div className="text-sm font-semibold text-blue-600">{earnings.balance}</div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+              <div>
+                Soatlik: {earnings.hourly.totalHours} soat × {earnings.hourly.hourlyRate} = {earnings.hourly.hourlyEarnings}
+              </div>
+              <div>
+                Sdelno: {earnings.piecework.completedCount} ta bajarilgan ish = {earnings.piecework.pieceworkEarnings}
+              </div>
+            </div>
+
+            <form className="flex items-end gap-2" onSubmit={handleSubmit(onPay)}>
+              <div className="flex-1">
+                <label className="mb-1 block text-xs font-medium text-slate-700">Summa</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0.01}
+                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                  {...register("amount", { required: true, valueAsNumber: true })}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="mb-1 block text-xs font-medium text-slate-700">Izoh (ixtiyoriy)</label>
+                <input
+                  className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                  {...register("note")}
+                />
+              </div>
+              <Button type="submit" disabled={paying || formState.isSubmitting}>
+                To'lov qilish
+              </Button>
+            </form>
+
+            <div>
+              <div className="mb-2 text-xs font-medium text-slate-700">To'lovlar tarixi</div>
+              {payments.length === 0 ? (
+                <p className="text-xs text-slate-400">Hozircha to'lov yo'q</p>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <tbody>
+                    {payments.map((p) => (
+                      <tr key={p.id} className="border-b border-slate-100 last:border-0">
+                        <td className="py-1.5 text-slate-500">{new Date(p.paidAt).toLocaleDateString()}</td>
+                        <td className="py-1.5 font-medium text-slate-900">{p.amount}</td>
+                        <td className="py-1.5 text-slate-500">{p.note ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </Modal>
   );
 }
 

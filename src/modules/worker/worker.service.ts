@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { CreateWorkerDto } from './dto/create-worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { Crypt } from '../../infrastructure/lib/Crypt';
+import { hashPinForLookup } from '../../infrastructure/helper/pin-lookup';
 import { successRes } from '../../infrastructure/utils/success-response';
 import { PrismaService } from '../../core/config/database/prisma.service';
 import { UserStatus } from '../../../generated/prisma/enums';
@@ -14,27 +15,18 @@ function generatePin(): string {
 export class WorkerService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // PIN endi terminalga kirishda yagona identifikator (telefon so'ralmaydi),
-  // shuning uchun barcha faol ishchilar orasida takrorlanmasligi kerak.
-  private async generateUniquePin(): Promise<string> {
-    const existing = await this.prisma.user.findMany({
-      where: { pinCode: { not: null } },
-      select: { pinCode: true },
-    });
-
+  // PIN terminalga kirishda yagona identifikator (telefon so'ralmaydi),
+  // shuning uchun barcha ishchilar orasida takrorlanmasligi kerak.
+  // pinLookup (HMAC) orqali O(1) tekshiramiz — haqiqiy tasdiqlash esa
+  // terminal kirishda bcrypt hash (pinCode) bilan amalga oshiriladi.
+  private async generateUniquePin(): Promise<{ pin: string; pinLookup: string }> {
     for (let attempt = 0; attempt < 30; attempt++) {
       const candidate = generatePin();
-      let collision = false;
+      const pinLookup = hashPinForLookup(candidate);
 
-      for (const u of existing) {
-        if (u.pinCode && (await Crypt.compare(candidate, u.pinCode).catch(() => false))) {
-          collision = true;
-          break;
-        }
-      }
-
+      const collision = await this.prisma.user.findUnique({ where: { pinLookup } });
       if (!collision) {
-        return candidate;
+        return { pin: candidate, pinLookup };
       }
     }
 
@@ -52,7 +44,7 @@ export class WorkerService {
       throw new NotFoundException('STAFF roli topilmadi');
     }
 
-    const pin = await this.generateUniquePin();
+    const { pin, pinLookup } = await this.generateUniquePin();
     const hashedPin = await Crypt.hash(pin);
 
     const worker = await this.prisma.user.create({
@@ -60,6 +52,7 @@ export class WorkerService {
         fullName: `${dto.firstName} ${dto.lastName}`,
         phone: dto.phone,
         pinCode: hashedPin,
+        pinLookup,
         roleId: staffRole.id,
         status: UserStatus.ACTIVE,
         hourlyPrice: dto.hourlyPrice,
@@ -121,6 +114,13 @@ export class WorkerService {
   async update(id: number, dto: UpdateWorkerDto) {
     await this.findWorkerOrThrow(id);
 
+    if (dto.phone) {
+      const phoneTaken = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+      if (phoneTaken && phoneTaken.id !== id) {
+        throw new ConflictException("Bu telefon raqam allaqachon ro'yxatdan o'tgan");
+      }
+    }
+
     const fullName =
       dto.firstName || dto.lastName
         ? [dto.firstName, dto.lastName].filter(Boolean).join(' ')
@@ -161,12 +161,12 @@ export class WorkerService {
   async resetPin(id: number) {
     await this.findWorkerOrThrow(id);
 
-    const pin = await this.generateUniquePin();
+    const { pin, pinLookup } = await this.generateUniquePin();
     const hashedPin = await Crypt.hash(pin);
 
     await this.prisma.user.update({
       where: { id },
-      data: { pinCode: hashedPin },
+      data: { pinCode: hashedPin, pinLookup },
     });
 
     return successRes({ pin }, 200);

@@ -1,9 +1,12 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Inject, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { REDIS_CLIENT } from "../../config/redis/redis.module";
 import Redis from "ioredis";
 import { MailerService } from "@nestjs-modules/mailer";
 import { generateOTP } from "../../../infrastructure/helper/otp-generator";
 import { getEmailHtml } from "../../../common/public";
+
+const MAX_OTP_ATTEMPTS = 5;
+const OTP_LOCK_SECONDS = 5 * 60;
 
 @Injectable()
 export class MailService {
@@ -15,9 +18,13 @@ export class MailService {
         private readonly mailerService: MailerService,
     ){}
 
-    private getOtpKey(email: string): string { 
-        return `otp:${email.toLowerCase().trim()}`; 
-    } 
+    private getOtpKey(email: string): string {
+        return `otp:${email.toLowerCase().trim()}`;
+    }
+
+    private getOtpFailKey(email: string): string {
+        return `otp-fail:${email.toLowerCase().trim()}`;
+    }
 
     private async generateOtpCode(email: string): Promise<string> { 
         const code = generateOTP(); 
@@ -39,7 +46,7 @@ export class MailService {
             html: getEmailHtml(code) 
         }); 
 
-        return { success: true, messageId: info.messageId, code }; 
+        return { success: true, messageId: info.messageId };
         } catch (error) {
         const key = this.getOtpKey(cleanEmail);
         await this.redis.del(key); 
@@ -49,20 +56,29 @@ export class MailService {
         }
     } 
 
-    async verifyOtp(to: string, code: string) { 
-        const key = this.getOtpKey(to); 
-        const stored = await this.redis.get(key); 
+    async verifyOtp(to: string, code: string) {
+        const failKey = this.getOtpFailKey(to);
+        const fails = Number(await this.redis.get(failKey)) || 0;
 
-        if (!stored) { 
-        throw new BadRequestException('Email topilmadi, kod muddati tugagan yoki avval so‘ralmagan'); 
-        } 
+        if (fails >= MAX_OTP_ATTEMPTS) {
+        throw new ForbiddenException("Juda ko'p noto'g'ri urinish. 5 daqiqadan keyin qayta urinib ko'ring");
+        }
 
-        if (stored !== code.trim()) { 
-        throw new BadRequestException('Noto‘g‘ri kod kiritildi'); 
-        } 
+        const key = this.getOtpKey(to);
+        const stored = await this.redis.get(key);
 
-        await this.redis.del(key); 
+        if (!stored) {
+        throw new BadRequestException('Email topilmadi, kod muddati tugagan yoki avval so‘ralmagan');
+        }
 
-        return { verified: true }; 
-    } 
+        if (stored !== code.trim()) {
+        await this.redis.multi().incr(failKey).expire(failKey, OTP_LOCK_SECONDS).exec();
+        throw new BadRequestException('Noto‘g‘ri kod kiritildi');
+        }
+
+        await this.redis.del(key);
+        await this.redis.del(failKey);
+
+        return { verified: true };
+    }
 }

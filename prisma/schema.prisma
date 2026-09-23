@@ -58,6 +58,7 @@ model User {
   password            String?
   phone               String?          @unique @db.VarChar(20)
   pinCode             String?
+  pinLookup           String?          @unique
   fullName            String?          @db.VarChar(100)
   avatar              String?
   roleId              Int
@@ -202,7 +203,7 @@ model InventoryMovement {
   quantity   Decimal      @db.Decimal(12, 2)
   reason     String?      @db.VarChar(255)
   createdAt  DateTime     @default(now())
-  material   Material     @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  material   Material     @relation(fields: [materialId], references: [id], onDelete: Restrict)
 }
 
 model ModelMaterial {

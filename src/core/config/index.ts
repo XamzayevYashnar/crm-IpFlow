@@ -33,4 +33,6 @@ export const conf = {
     },
 
     ROLE_NAME: String(process.env.ROLE_NAME),
+
+    PIN_LOOKUP_SECRET: String(process.env.PIN_LOOKUP_SECRET || process.env.ACCESS_TOKEN_KEY),
 }

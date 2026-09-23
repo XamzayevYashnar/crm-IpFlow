@@ -1,8 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../core/config/database/prisma.service';
 import { successRes } from '../../infrastructure/utils/success-response';
 import { TakeWorkDto } from './dto/take-work.dto';
 import { AssignmentStatus, BatchStatus } from '../../../generated/prisma/enums';
+import { Prisma } from '../../../generated/prisma/client';
 
 const MAX_ACTIVE_ASSIGNMENTS = 2;
 
@@ -74,76 +75,90 @@ export class WorkAssignmentService {
   }
 
   async take(userId: number, dto: TakeWorkDto) {
-    const activeCount = await this.prisma.workAssignment.count({
-      where: { userId, status: AssignmentStatus.IN_PROGRESS },
-    });
+    try {
+      const assignment = await this.prisma.$transaction(
+        async (tx) => {
+          const activeCount = await tx.workAssignment.count({
+            where: { userId, status: AssignmentStatus.IN_PROGRESS },
+          });
 
-    if (activeCount >= MAX_ACTIVE_ASSIGNMENTS) {
-      throw new BadRequestException(
-        `Siz bir vaqtda maksimum ${MAX_ACTIVE_ASSIGNMENTS} ta ish olishingiz mumkin`,
+          if (activeCount >= MAX_ACTIVE_ASSIGNMENTS) {
+            throw new BadRequestException(
+              `Siz bir vaqtda maksimum ${MAX_ACTIVE_ASSIGNMENTS} ta ish olishingiz mumkin`,
+            );
+          }
+
+          const modelOperation = await tx.modelOperation.findUnique({
+            where: { id: dto.modelOperationId },
+          });
+          if (!modelOperation) {
+            throw new NotFoundException('Operatsiya topilmadi');
+          }
+
+          const batch = await tx.orderBatch.findUnique({ where: { id: dto.orderBatchId } });
+          if (!batch) {
+            throw new NotFoundException('Partiya topilmadi');
+          }
+
+          const existing = await tx.workAssignment.findMany({
+            where: {
+              orderBatchId: dto.orderBatchId,
+              modelOperationId: dto.modelOperationId,
+              status: { not: AssignmentStatus.RETURNED },
+            },
+          });
+          const taken = existing.reduce((sum, wa) => sum + wa.quantityAssigned, 0);
+
+          let unlocked = batch.totalQuantity;
+          if (modelOperation.stepOrder > 1) {
+            const prevOp = await tx.modelOperation.findFirst({
+              where: { modelId: modelOperation.modelId, stepOrder: modelOperation.stepOrder - 1 },
+            });
+            if (prevOp) {
+              const prevCompleted = await tx.workAssignment.aggregate({
+                where: { orderBatchId: dto.orderBatchId, modelOperationId: prevOp.id, status: AssignmentStatus.COMPLETED },
+                _sum: { quantityAssigned: true },
+              });
+              unlocked = prevCompleted._sum.quantityAssigned ?? 0;
+            } else {
+              unlocked = 0;
+            }
+          }
+
+          const availableQty = unlocked - taken;
+          if (dto.quantity > availableQty) {
+            throw new BadRequestException(`Faqat ${availableQty} dona mavjud`);
+          }
+
+          const created = await tx.workAssignment.create({
+            data: {
+              userId,
+              orderBatchId: dto.orderBatchId,
+              modelOperationId: dto.modelOperationId,
+              quantityAssigned: dto.quantity,
+              status: AssignmentStatus.IN_PROGRESS,
+            },
+          });
+
+          if (batch.status === BatchStatus.NEW) {
+            await tx.orderBatch.update({
+              where: { id: batch.id },
+              data: { status: BatchStatus.IN_PRODUCTION },
+            });
+          }
+
+          return created;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
-    }
 
-    const modelOperation = await this.prisma.modelOperation.findUnique({
-      where: { id: dto.modelOperationId },
-    });
-    if (!modelOperation) {
-      throw new NotFoundException('Operatsiya topilmadi');
-    }
-
-    const batch = await this.prisma.orderBatch.findUnique({ where: { id: dto.orderBatchId } });
-    if (!batch) {
-      throw new NotFoundException('Partiya topilmadi');
-    }
-
-    const existing = await this.prisma.workAssignment.findMany({
-      where: {
-        orderBatchId: dto.orderBatchId,
-        modelOperationId: dto.modelOperationId,
-        status: { not: AssignmentStatus.RETURNED },
-      },
-    });
-    const taken = existing.reduce((sum, wa) => sum + wa.quantityAssigned, 0);
-
-    let unlocked = batch.totalQuantity;
-    if (modelOperation.stepOrder > 1) {
-      const prevOp = await this.prisma.modelOperation.findFirst({
-        where: { modelId: modelOperation.modelId, stepOrder: modelOperation.stepOrder - 1 },
-      });
-      if (prevOp) {
-        const prevCompleted = await this.prisma.workAssignment.aggregate({
-          where: { orderBatchId: dto.orderBatchId, modelOperationId: prevOp.id, status: AssignmentStatus.COMPLETED },
-          _sum: { quantityAssigned: true },
-        });
-        unlocked = prevCompleted._sum.quantityAssigned ?? 0;
-      } else {
-        unlocked = 0;
+      return successRes({ assignment }, 201);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+        throw new ConflictException("Boshqa so'rov bilan to'qnashdi, qayta urinib ko'ring");
       }
+      throw error;
     }
-
-    const availableQty = unlocked - taken;
-    if (dto.quantity > availableQty) {
-      throw new BadRequestException(`Faqat ${availableQty} dona mavjud`);
-    }
-
-    const assignment = await this.prisma.workAssignment.create({
-      data: {
-        userId,
-        orderBatchId: dto.orderBatchId,
-        modelOperationId: dto.modelOperationId,
-        quantityAssigned: dto.quantity,
-        status: AssignmentStatus.IN_PROGRESS,
-      },
-    });
-
-    if (batch.status === BatchStatus.NEW) {
-      await this.prisma.orderBatch.update({
-        where: { id: batch.id },
-        data: { status: BatchStatus.IN_PRODUCTION },
-      });
-    }
-
-    return successRes({ assignment }, 201);
   }
 
   private async findOwnAssignment(id: number, userId: number) {

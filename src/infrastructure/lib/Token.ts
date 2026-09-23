@@ -2,10 +2,24 @@ import { IPayload } from '../../common/interface/interface-payload';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { conf } from '../../core/config/index';
 import { UnauthorizedException } from '@nestjs/common';
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 import { IToken } from "../../common/interface/interface-token"
-import { User } from '@prisma-generated/client';
-import { IUser } from 'src/common/interface/interface-user';
+
+const DURATION_UNITS: Record<string, number> = {
+  s: 1000,
+  m: 60 * 1000,
+  h: 60 * 60 * 1000,
+  d: 24 * 60 * 60 * 1000,
+};
+
+function durationToMs(value: string, fallbackMs: number): number {
+  const match = /^(\d+)\s*(s|m|h|d)$/.exec(value.trim());
+  if (!match) {
+    return fallbackMs;
+  }
+  const [, amount, unit] = match;
+  return Number(amount) * DURATION_UNITS[unit];
+}
 
 export class Token {
   private static readonly jwt = new JwtService();
@@ -36,22 +50,31 @@ export class Token {
     }
   }
 
+  static cookieOptions(maxAgeMs: number): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: maxAgeMs,
+    };
+  }
+
   static setCookie(
     res: Response,
     accessToken: string,
     refreshToken?: string,
   ): void {
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      maxAge: parseInt(conf.TOKEN.ACCESS_TIME) * 24 * 60 * 60 * 1000,
-    });
+    res.cookie(
+      'accessToken',
+      accessToken,
+      this.cookieOptions(durationToMs(conf.TOKEN.ACCESS_TIME, 15 * 60 * 1000)),
+    );
     if (refreshToken) {
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: false,
-        maxAge: parseInt(conf.TOKEN.REFRESH_TIME) * 24 * 60 * 60 * 1000,
-      });
+      res.cookie(
+        'refreshToken',
+        refreshToken,
+        this.cookieOptions(durationToMs(conf.TOKEN.REFRESH_TIME, 7 * 24 * 60 * 60 * 1000)),
+      );
     }
   }
 

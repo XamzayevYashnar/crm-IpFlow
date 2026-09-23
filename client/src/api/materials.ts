@@ -1,14 +1,9 @@
-import { http, type ApiError } from "../lib/http";
+import { http } from "../lib/http";
 import type { Material, MaterialFormValues } from "../types/material";
 
 export async function listMaterials(): Promise<Material[]> {
-  try {
-    const res = await http.get<Material[]>("/material");
-    return res.data;
-  } catch (e) {
-    if ((e as ApiError).status === 404) return [];
-    throw e;
-  }
+  const res = await http.get<Material[]>("/material");
+  return res.data;
 }
 
 export async function getMaterial(id: number): Promise<Material> {

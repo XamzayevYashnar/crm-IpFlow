@@ -1,8 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateMaterialDto } from '../dto/create-material.dto';
 import { PrismaService } from '../../../core/config/database/prisma.service';
 import { successRes } from '../../../infrastructure/utils/success-response';
 import { UpdateMaterialDto } from '../dto/update-material.dto';
+import { Prisma } from '../../../../generated/prisma/client';
 
 @Injectable()
 export class MaterialService {
@@ -27,9 +28,7 @@ export class MaterialService {
       }
     });
 
-    if (materials.length === 0) throw new NotFoundException("Materials is empty");
-
-    return materials;
+    return successRes(materials, 200);
   }
 
   async findOne(id: number){
@@ -59,9 +58,18 @@ export class MaterialService {
   async delete(id: number){
     await this.findOne(id);
 
-    await this.prisma.material.delete({
-      where: { id }
-    });
+    try {
+      await this.prisma.material.delete({
+        where: { id }
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new ConflictException(
+          "Bu materialni o'chirib bo'lmaydi — unga bog'liq kirim/chiqim tarixi mavjud",
+        );
+      }
+      throw error;
+    }
 
     return successRes({ message: "material is success deleted" }, 201)
   }

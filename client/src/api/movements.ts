@@ -1,15 +1,10 @@
-import { http, type ApiError } from "../lib/http";
+import { http } from "../lib/http";
 import type { InventoryMovement, MovementFormValues } from "../types/movement";
 import type { Material } from "../types/material";
 
 export async function listMovements(): Promise<InventoryMovement[]> {
-  try {
-    const res = await http.get<InventoryMovement[]>("/movement");
-    return res.data;
-  } catch (e) {
-    if ((e as ApiError).status === 404) return [];
-    throw e;
-  }
+  const res = await http.get<InventoryMovement[]>("/movement");
+  return res.data;
 }
 
 export async function createMovement(

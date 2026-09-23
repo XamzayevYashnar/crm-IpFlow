@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in';
 import { BaseService } from '../../core/apps/service/base.service';
 import { Crypt } from '../../infrastructure/lib/Crypt';
@@ -27,11 +27,14 @@ export class AuthService extends BaseService {
       throw new ForbiddenException("Bu hisob email orqali kira olmaydi");
     }
 
-    await Crypt.compare(dto.password, user.password);
+    const passwordMatches = await Crypt.compare(dto.password, user.password);
+    if (!passwordMatches) {
+      throw new UnauthorizedException("email or password is incorrect!");
+    }
 
-    const result = await this.mail.sendOtp(dto.email);
+    await this.mail.sendOtp(dto.email);
 
-    return successRes({ message: "OTP code was successfully sent in gmail", test: result }, 200)
+    return successRes({ message: "OTP code was successfully sent in gmail" }, 200)
   }
 
   async verifyOtp(dto: VerifyOtpDto, res: Response){

@@ -71,13 +71,10 @@ export class MovementService {
   } 
 
   async findAll() {
-    const data = await this.prisma.inventoryMovement.findMany({ 
-      include: { material: true } 
+    const data = await this.prisma.inventoryMovement.findMany({
+      include: { material: true }
     });
-    
-    if (data.length === 0) {
-      throw new NotFoundException("Data is empty");
-    }
+
     return successRes(data, 200);
   }
 

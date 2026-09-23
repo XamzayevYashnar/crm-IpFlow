@@ -25,5 +25,5 @@
       "@prisma-generated/*": ["generated/prisma/*"]
     }
   },
-  "exclude": ["node_modules", "generated", "dist"]
+  "exclude": ["node_modules", "generated", "dist", "crm-IpFlow"]
 }

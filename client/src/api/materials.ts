@@ -12,8 +12,8 @@ export async function listMaterials(): Promise<Material[]> {
 }
 
 export async function getMaterial(id: number): Promise<Material> {
-  const res = await http.get<{ isExists: Material }>(`/material/${id}`);
-  return res.data.isExists;
+  const res = await http.get<{ material: Material }>(`/material/${id}`);
+  return res.data.material;
 }
 
 export async function createMaterial(values: MaterialFormValues): Promise<Material> {

@@ -5,6 +5,7 @@ import { AppLayout } from "./layouts/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Materials from "./pages/Materials";
+import Movements from "./pages/Movements";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/materials" element={<Materials />} />
+              <Route path="/materials/movements" element={<Movements />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

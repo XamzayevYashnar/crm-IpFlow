@@ -32,7 +32,7 @@ export const navGroups: NavGroup[] = [
     title: "Ombor",
     items: [
       { label: "Materiallar", to: "/materials", ready: true },
-      { label: "Kirim / Chiqim", to: "/materials/movements", ready: false },
+      { label: "Kirim / Chiqim", to: "/materials/movements", ready: true },
     ],
   },
   {

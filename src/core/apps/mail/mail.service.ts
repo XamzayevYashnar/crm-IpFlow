@@ -23,7 +23,7 @@ export class MailService {
         const code = generateOTP(); 
         const key = this.getOtpKey(email);
         
-        await this.redis.set(key, code, 'EX', 300); 
+        await this.redis.set(key, code, 'EX', 60 * 60 * 24);
         return code; 
     } 
 

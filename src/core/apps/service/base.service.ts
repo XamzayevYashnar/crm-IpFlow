@@ -21,6 +21,18 @@ export class BaseService {
         return isExists;
     };
 
+    async existsPhone(phone: string): Promise<IUser> {
+        const isExists = await this.prisma.user.findUnique({
+            where: { phone }
+        });
+
+        if (!isExists){
+            throw new UnauthorizedException("telefon raqam yoki PIN kod noto'g'ri!");
+        };
+
+        return isExists;
+    };
+
     async existsId(id: number) {
         if (!id) {
             throw new UnauthorizedException("Please logIn before continue!");

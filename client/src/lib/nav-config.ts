@@ -38,7 +38,8 @@ export const navGroups: NavGroup[] = [
   {
     title: "Xodimlar",
     items: [
-      { label: "Xodimlar", to: "/employees", ready: false },
+      { label: "Xodimlar", to: "/employees", ready: true },
+      { label: "Ishchilar (Terminal)", to: "/workers", ready: true },
       { label: "Davomat", to: "/attendance", ready: false },
     ],
   },

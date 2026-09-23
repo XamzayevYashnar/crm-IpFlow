@@ -23,6 +23,10 @@ export class AuthService extends BaseService {
   async signIn(dto: SignInDto){
     const user = await this.existsEmail(dto.email);
 
+    if (!user.password) {
+      throw new ForbiddenException("Bu hisob email orqali kira olmaydi");
+    }
+
     await Crypt.compare(dto.password, user.password);
 
     const result = await this.mail.sendOtp(dto.email);

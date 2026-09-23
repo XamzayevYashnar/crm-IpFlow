@@ -8,18 +8,26 @@ import { RedisModule } from './core/config/redis/redis.module';
 import { MaterialModule } from './modules/material/material.module';
 import { ProductModule } from './modules/product/product.module';
 import { OperationModule } from './modules/operation/operation.module';
+import { WorkerModule } from './modules/worker/worker.module';
+import { TerminalModule } from './modules/terminal/terminal.module';
+import { WorkAssignmentModule } from './modules/work-assignment/work-assignment.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
-    AdminModule, 
+    AdminModule,
     MailModule,
     BaseModule,
     RedisModule,
     MaterialModule,
     ProductModule,
     OperationModule,
+    WorkerModule,
+    TerminalModule,
+    WorkAssignmentModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}

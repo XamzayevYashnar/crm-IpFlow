@@ -71,6 +71,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
 
       this.logger.log(`Current Super Admin ID: ${superAdmin.id}`);
+
+      for (const name of ["ADMIN", "STAFF"]) {
+        await this.userRole.upsert({
+          where: { name },
+          update: {},
+          create: { name },
+        });
+      }
+      this.logger.log("ADMIN and STAFF roles synchronized");
     } catch (error) {
       this.logger.error("Database seed and initialization failed", error);
       throw error;

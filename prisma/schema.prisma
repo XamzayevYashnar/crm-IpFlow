@@ -54,8 +54,10 @@ enum MaterialUnit {
 
 model User {
   id                  Int              @id @default(autoincrement())
-  email               String           @unique @db.VarChar(254)
-  password            String
+  email               String?           @unique @db.VarChar(254)
+  password            String?
+  phone               String?          @unique @db.VarChar(20)
+  pinCode             String?
   fullName            String?          @db.VarChar(100)
   avatar              String?
   roleId              Int
@@ -67,6 +69,7 @@ model User {
   attendances         Attendance[]     @relation("UserAttendances")
   updatedAttendances  Attendance[]     @relation("SuperAdminAttendanceUpdates")
   workAssignments     WorkAssignment[]
+  payments            Payment[]
 }
 
 model UserRole {
@@ -119,6 +122,7 @@ model ModelOperation {
   id           Int              @id @default(autoincrement())
   modelId      Int
   operationId  Int
+  pricePerUnit Decimal?         @db.Decimal(12,2) 
   stepOrder    Int
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
@@ -210,4 +214,13 @@ model ModelMaterial {
   product        ProductModel @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, materialId])
+}
+model Payment {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  amount          Decimal   @db.Decimal(12,2)
+  note            String?   @db.VarChar(255)
+  paidAt          DateTime  @default(now())
+  createdBy       Int?  
+  user            User      @relation(fields:[userId], references: [id], onDelete: Cascade)
 }

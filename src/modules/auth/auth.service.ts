@@ -5,7 +5,7 @@ import { Crypt } from '../../infrastructure/lib/Crypt';
 import { PrismaService } from '../../core/config/database/prisma.service';
 import { MailService } from '../../core/apps/mail/mail.service';
 import { successRes } from '../../infrastructure/utils/success-response';
-import type { Response } from 'express'
+import type { Request, Response } from 'express';
 import { VerifyOtpDto } from './dto/verify-dto';
 import { generatePayload } from '../../infrastructure/helper/payload-generator';
 import { Token } from '../../infrastructure/lib/Token';
@@ -60,5 +60,16 @@ export class AuthService extends BaseService {
     Token.setCookie(res, result.accessToken, result.refreshToken);
 
     return successRes({ message: "Token success updated" }, 201);
+  }
+
+  async logout(req: Request, res: Response) {
+    const accessToken = req.cookies?.accessToken;
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (accessToken || refreshToken) {
+      Token.clearCookie(res);
+    }
+
+    return successRes({ message: 'you success logout' }, 200);
   }
 }

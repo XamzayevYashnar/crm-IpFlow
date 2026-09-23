@@ -6,6 +6,8 @@ import { MailModule } from './core/apps/mail/mail.module';
 import { BaseModule } from './core/apps/service/base.module';
 import { RedisModule } from './core/config/redis/redis.module';
 import { MaterialModule } from './modules/material/material.module';
+import { ProductModule } from './modules/product/product.module';
+import { OperationModule } from './modules/operation/operation.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { MaterialModule } from './modules/material/material.module';
     BaseModule,
     RedisModule,
     MaterialModule,
+    ProductModule,
+    OperationModule,
   ],
 })
 export class AppModule {}

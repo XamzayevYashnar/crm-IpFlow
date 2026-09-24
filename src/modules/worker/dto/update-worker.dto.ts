@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber, IsOptional, IsString, Matches } from "class-validator";
-import { UserStatus } from "../../../../generated/prisma/enums";
+import { UserStatus, PayType } from "../../../../generated/prisma/enums";
 
 export class UpdateWorkerDto {
     @IsOptional() @IsString() firstName?: string;
@@ -7,6 +7,10 @@ export class UpdateWorkerDto {
 
     @IsOptional() @IsString() @Matches(/^\+?\d{9,15}$/, { message: "Telefon raqam formati noto'g'ri" })
     phone?: string;
+
+    @IsOptional()
+    @IsEnum(PayType, { message: "payType noto'g'ri. Ruxsat etilgan: HOURLY, PIECE_RATE" })
+    payType?: PayType;
 
     @IsOptional() @IsNumber() hourlyPrice?: number;
 

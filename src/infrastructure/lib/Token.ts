@@ -82,4 +82,15 @@ export class Token {
     res.clearCookie('refreshToken');
     res.clearCookie('accessToken');
   }
+
+  // Terminal (PIN) sessiyasi admin sessiyasidan alohida cookie nomida saqlanadi,
+  // aks holda bir xil brauzerda ikkalasi bir-birining accessToken cookie'sini
+  // ustidan yozib, sessiyani buzib qo'yadi.
+  static setTerminalCookie(res: Response, accessToken: string, maxAgeMs: number): void {
+    res.cookie('terminalAccessToken', accessToken, this.cookieOptions(maxAgeMs));
+  }
+
+  static clearTerminalCookie(res: Response): void {
+    res.clearCookie('terminalAccessToken');
+  }
 }

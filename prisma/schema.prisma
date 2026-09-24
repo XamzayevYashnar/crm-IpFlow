@@ -52,6 +52,11 @@ enum MaterialUnit {
   METR
 }
 
+enum PayType {
+  HOURLY
+  PIECE_RATE
+}
+
 model User {
   id                  Int              @id @default(autoincrement())
   email               String?           @unique @db.VarChar(254)
@@ -64,6 +69,7 @@ model User {
   roleId              Int
   role                UserRole         @relation(fields: [roleId], references: [id])
   status              UserStatus       @default(INACTIVE)
+  payType             PayType          @default(HOURLY)
   hourlyPrice         Decimal?         @db.Decimal(12, 2)
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -146,26 +152,40 @@ model Customer {
 
 model Order {
   id           Int          @id @default(autoincrement())
-  customerId   Int
+  customerId   Int?
   modelId      Int
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
-  customer     Customer     @relation(fields: [customerId], references: [id])
+  customer     Customer?    @relation(fields: [customerId], references: [id])
   productModel ProductModel @relation(fields: [modelId], references: [id])
   orderBatches OrderBatch[]
+}
+
+model Color {
+  id      Int          @id @default(autoincrement())
+  name    String       @unique @db.VarChar(50)
+  batches OrderBatch[]
+}
+
+model Size {
+  id      Int          @id @default(autoincrement())
+  name    String       @unique @db.VarChar(30)
+  batches OrderBatch[]
 }
 
 model OrderBatch {
   id              Int              @id @default(autoincrement())
   orderId         Int
   batchNumber     Int              @unique @default(autoincrement())
-  color           String           @db.VarChar(50)
-  size            String           @db.VarChar(30)
+  colorId         Int
+  sizeId          Int
   totalQuantity   Int
   status          BatchStatus      @default(NEW)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  color           Color            @relation(fields: [colorId], references: [id])
+  size            Size             @relation(fields: [sizeId], references: [id])
   workAssignments WorkAssignment[]
 }
 

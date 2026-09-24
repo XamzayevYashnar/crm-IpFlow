@@ -3,7 +3,7 @@ import { ExternalLink, Plus, Pencil, Ban, KeyRound, Wallet } from "lucide-react"
 import { useForm } from "react-hook-form";
 import { blockWorker, createWorker, listWorkers, resetWorkerPin, updateWorker } from "../api/workers";
 import { createPayment, workerEarnings, workerPayments } from "../api/payments";
-import type { Worker, WorkerCreateValues, WorkerStatus, WorkerUpdateValues } from "../types/worker";
+import type { PayType, Worker, WorkerCreateValues, WorkerStatus, WorkerUpdateValues } from "../types/worker";
 import type { Earnings, Payment } from "../types/terminal";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
@@ -21,6 +21,10 @@ const statusLabel: Record<WorkerStatus, string> = {
   ACTIVE: "Faol",
   INACTIVE: "Faol emas",
   BLOCKED: "Bloklangan",
+};
+const payTypeLabel: Record<PayType, string> = {
+  HOURLY: "Soatlik",
+  PIECE_RATE: "Sdelno",
 };
 
 export default function Workers() {
@@ -124,7 +128,7 @@ export default function Workers() {
               <tr>
                 <th className="px-4 py-3">Ism</th>
                 <th className="px-4 py-3">Telefon</th>
-                <th className="px-4 py-3">Soatlik stavka</th>
+                <th className="px-4 py-3">To'lov turi</th>
                 <th className="px-4 py-3">Holat</th>
                 <th className="px-4 py-3 text-right">Harakatlar</th>
               </tr>
@@ -134,7 +138,10 @@ export default function Workers() {
                 <tr key={w.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                   <td className="px-4 py-3 font-medium text-slate-900">{w.fullName ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-600">{w.phone}</td>
-                  <td className="px-4 py-3 text-slate-600">{w.hourlyPrice ? `${w.hourlyPrice} so'm` : "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {payTypeLabel[w.payType]}
+                    {w.payType === "HOURLY" && w.hourlyPrice ? ` — ${w.hourlyPrice} so'm/soat` : ""}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge tone={statusTone[w.status]}>{statusLabel[w.status]}</Badge>
                   </td>
@@ -292,12 +299,16 @@ function WorkerBalanceModal({ worker, onClose }: { worker: Worker; onClose: () =
             </div>
 
             <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-              <div>
-                Soatlik: {earnings.hourly.totalHours} soat × {earnings.hourly.hourlyRate} = {earnings.hourly.hourlyEarnings}
-              </div>
-              <div>
-                Sdelno: {earnings.piecework.completedCount} ta bajarilgan ish = {earnings.piecework.pieceworkEarnings}
-              </div>
+              {earnings.hourly && (
+                <div>
+                  Soatlik: {earnings.hourly.totalHours} soat × {earnings.hourly.hourlyRate} = {earnings.hourly.hourlyEarnings}
+                </div>
+              )}
+              {earnings.piecework && (
+                <div>
+                  Sdelno: {earnings.piecework.completedCount} ta bajarilgan ish = {earnings.piecework.pieceworkEarnings}
+                </div>
+              )}
             </div>
 
             <form className="flex items-end gap-2" onSubmit={handleSubmit(onPay)}>
@@ -355,13 +366,16 @@ function WorkerCreateModal({
   onClose: () => void;
   onCreated: (name: string, pin: string) => void;
 }) {
-  const { register, handleSubmit, formState } = useForm<WorkerCreateValues>();
+  const { register, handleSubmit, watch, formState } = useForm<WorkerCreateValues>({
+    defaultValues: { payType: "PIECE_RATE" },
+  });
+  const payType = watch("payType");
 
   async function onSubmit(values: WorkerCreateValues) {
     try {
       const res = await createWorker({
         ...values,
-        hourlyPrice: values.hourlyPrice ? Number(values.hourlyPrice) : undefined,
+        hourlyPrice: values.payType === "HOURLY" && values.hourlyPrice ? Number(values.hourlyPrice) : undefined,
       });
       onCreated(res.worker.fullName, res.pin);
     } catch (e) {
@@ -397,13 +411,25 @@ function WorkerCreateModal({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Soatlik stavka (ixtiyoriy)</label>
-          <input
-            type="number"
+          <label className="mb-1 block text-sm font-medium text-slate-700">To'lov turi</label>
+          <select
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            {...register("hourlyPrice", { valueAsNumber: true })}
-          />
+            {...register("payType", { required: true })}
+          >
+            <option value="PIECE_RATE">Sdelno (bajargan ish bo'yicha)</option>
+            <option value="HOURLY">Soatlik (kelish/ketish bo'yicha)</option>
+          </select>
         </div>
+        {payType === "HOURLY" && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Soatlik stavka</label>
+            <input
+              type="number"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              {...register("hourlyPrice", { required: true, valueAsNumber: true })}
+            />
+          </div>
+        )}
         <p className="text-xs text-slate-400">4 xonali PIN kod avtomatik yaratiladi va saqlangandan keyin ko'rsatiladi.</p>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
@@ -427,21 +453,24 @@ function WorkerEditModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { register, handleSubmit, formState } = useForm<WorkerUpdateValues & { fullName?: string }>({
+  const { register, handleSubmit, watch, formState } = useForm<WorkerUpdateValues & { fullName?: string }>({
     defaultValues: {
       fullName: worker.fullName ?? "",
       phone: worker.phone ?? "",
+      payType: worker.payType,
       hourlyPrice: worker.hourlyPrice ? Number(worker.hourlyPrice) : undefined,
       status: worker.status,
     },
   });
+  const payType = watch("payType");
 
   async function onSubmit(values: WorkerUpdateValues & { fullName?: string }) {
     try {
       await updateWorker(worker.id, {
         firstName: values.fullName,
         phone: values.phone,
-        hourlyPrice: values.hourlyPrice ? Number(values.hourlyPrice) : undefined,
+        payType: values.payType,
+        hourlyPrice: values.payType === "HOURLY" && values.hourlyPrice ? Number(values.hourlyPrice) : undefined,
         status: values.status,
       });
       toast.success("Ishchi yangilandi");
@@ -469,13 +498,25 @@ function WorkerEditModal({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Soatlik stavka</label>
-          <input
-            type="number"
+          <label className="mb-1 block text-sm font-medium text-slate-700">To'lov turi</label>
+          <select
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            {...register("hourlyPrice", { valueAsNumber: true })}
-          />
+            {...register("payType", { required: true })}
+          >
+            <option value="PIECE_RATE">Sdelno (bajargan ish bo'yicha)</option>
+            <option value="HOURLY">Soatlik (kelish/ketish bo'yicha)</option>
+          </select>
         </div>
+        {payType === "HOURLY" && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Soatlik stavka</label>
+            <input
+              type="number"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              {...register("hourlyPrice", { required: true, valueAsNumber: true })}
+            />
+          </div>
+        )}
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Holat</label>
           <select

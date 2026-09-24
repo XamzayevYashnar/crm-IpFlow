@@ -1,9 +1,8 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { AssignCustomerDto } from './dto/assign-customer.dto';
-import { CreateOrderBatchInputDto } from '../order-batch/dto/create-order-batch.dto';
+import { SizeService } from './size.service';
+import { CreateSizeDto } from './dto/create-size.dto';
+import { UpdateSizeDto } from './dto/update-size.dto';
 import { JwtAuthGuard } from '../../common/guard/jwt-auth.guard';
 import { RolesGuard } from '../../common/guard/roles.guard';
 import { Roles } from '../../common/decorator/roles.decorator';
@@ -11,13 +10,13 @@ import { Role } from '../../../generated/prisma/enums';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.SUPER_ADMIN, Role.ADMIN)
-@ApiTags('Orders')
-@Controller('order')
-export class OrderController {
-  constructor(private readonly service: OrderService) {}
+@ApiTags('Sizes')
+@Controller('sizes')
+export class SizeController {
+  constructor(private readonly service: SizeService) {}
 
   @Post()
-  create(@Body() dto: CreateOrderDto) {
+  create(@Body() dto: CreateSizeDto) {
     return this.service.create(dto);
   }
 
@@ -31,14 +30,9 @@ export class OrderController {
     return this.service.findOne(id);
   }
 
-  @Post(':id/batches')
-  addBatch(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateOrderBatchInputDto) {
-    return this.service.addBatch(id, dto);
-  }
-
-  @Patch(':id/customer')
-  assignCustomer(@Param('id', ParseIntPipe) id: number, @Body() dto: AssignCustomerDto) {
-    return this.service.assignCustomer(id, dto);
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSizeDto) {
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')

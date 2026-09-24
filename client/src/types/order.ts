@@ -1,13 +1,16 @@
 import type { Customer } from "./customer";
+import type { Color, Size } from "./catalog";
 
 export type BatchStatus = "NEW" | "IN_PRODUCTION" | "AWAITING_ACCEPTANCE" | "ACCEPTED" | "SHIPPED";
 
-export interface OrderBatchSummary {
+export interface OrderBatch {
   id: number;
   orderId: number;
   batchNumber: number;
-  color: string;
-  size: string;
+  colorId: number;
+  sizeId: number;
+  color: Color;
+  size: Size;
   totalQuantity: number;
   status: BatchStatus;
   createdAt: string;
@@ -22,33 +25,22 @@ export interface OrderProductModel {
 
 export interface Order {
   id: number;
-  customerId: number;
+  customerId: number | null;
   modelId: number;
   createdAt: string;
   updatedAt: string;
-  customer: Customer;
+  customer: Customer | null;
   productModel: OrderProductModel;
-  orderBatches: OrderBatchSummary[];
+  orderBatches: OrderBatch[];
+}
+
+export interface OrderBatchInput {
+  colorId: number;
+  sizeId: number;
+  totalQuantity: number;
 }
 
 export interface OrderFormValues {
-  customerId: number;
   modelId: number;
-}
-
-export interface OrderBatch extends OrderBatchSummary {
-  order: {
-    id: number;
-    customerId: number;
-    modelId: number;
-    customer: Customer;
-    productModel: OrderProductModel;
-  };
-}
-
-export interface OrderBatchFormValues {
-  orderId: number;
-  color: string;
-  size: string;
-  totalQuantity: number;
+  batches: OrderBatchInput[];
 }

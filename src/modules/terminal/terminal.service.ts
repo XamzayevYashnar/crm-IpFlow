@@ -59,13 +59,13 @@ export class TerminalService {
     const payload = generatePayload(candidate.id, candidate.role.name, candidate.status);
     const { accessToken } = await Token.getToken(payload);
 
-    res.cookie('accessToken', accessToken, Token.cookieOptions(SESSION_SECONDS * 1000));
+    Token.setTerminalCookie(res, accessToken, SESSION_SECONDS * 1000);
 
     return successRes({ user: { id: candidate.id, fullName: candidate.fullName } }, 200);
   }
 
   logout(res: Response) {
-    Token.clearCookie(res);
+    Token.clearTerminalCookie(res);
     return successRes({ message: 'Chiqildi' }, 200);
   }
 }

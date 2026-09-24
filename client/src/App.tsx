@@ -14,7 +14,7 @@ import Products from "./pages/Products";
 import Operations from "./pages/Operations";
 import Customers from "./pages/Customers";
 import Orders from "./pages/Orders";
-import Batches from "./pages/Batches";
+import Settings from "./pages/Settings";
 import TerminalLogin from "./pages/terminal/TerminalLogin";
 import TerminalHome from "./pages/terminal/TerminalHome";
 
@@ -53,7 +53,7 @@ export default function App() {
                     <Route path="/operations" element={<Operations />} />
                     <Route path="/customers" element={<Customers />} />
                     <Route path="/orders" element={<Orders />} />
-                    <Route path="/batches" element={<Batches />} />
+                    <Route path="/settings" element={<Settings />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

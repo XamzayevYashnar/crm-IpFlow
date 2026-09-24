@@ -41,23 +41,31 @@ export class PaymentService {
       throw new NotFoundException('Foydalanuvchi topilmadi');
     }
 
-    const hoursAgg = await this.prisma.attendance.aggregate({
-      where: { userId },
-      _sum: { totalHours: true },
-    });
-    const totalHours = hoursAgg._sum.totalHours ?? new Prisma.Decimal(0);
-    const hourlyRate = user.hourlyPrice ?? new Prisma.Decimal(0);
-    const hourlyEarnings = totalHours.mul(hourlyRate);
+    let totalHours = new Prisma.Decimal(0);
+    let hourlyRate = new Prisma.Decimal(0);
+    let hourlyEarnings = new Prisma.Decimal(0);
+    let completedAssignments: Array<{ quantityAssigned: number; modelOperation: { pricePerUnit: Prisma.Decimal | null } }> = [];
+    let pieceworkEarnings = new Prisma.Decimal(0);
 
-    const completedAssignments = await this.prisma.workAssignment.findMany({
-      where: { userId, status: AssignmentStatus.COMPLETED },
-      include: { modelOperation: true },
-    });
+    if (user.payType === 'HOURLY') {
+      const hoursAgg = await this.prisma.attendance.aggregate({
+        where: { userId },
+        _sum: { totalHours: true },
+      });
+      totalHours = hoursAgg._sum.totalHours ?? new Prisma.Decimal(0);
+      hourlyRate = user.hourlyPrice ?? new Prisma.Decimal(0);
+      hourlyEarnings = totalHours.mul(hourlyRate);
+    } else {
+      completedAssignments = await this.prisma.workAssignment.findMany({
+        where: { userId, status: AssignmentStatus.COMPLETED },
+        include: { modelOperation: true },
+      });
 
-    const pieceworkEarnings = completedAssignments.reduce((sum, wa) => {
-      const price = wa.modelOperation.pricePerUnit ?? new Prisma.Decimal(0);
-      return sum.add(price.mul(wa.quantityAssigned));
-    }, new Prisma.Decimal(0));
+      pieceworkEarnings = completedAssignments.reduce((sum, wa) => {
+        const price = wa.modelOperation.pricePerUnit ?? new Prisma.Decimal(0);
+        return sum.add(price.mul(wa.quantityAssigned));
+      }, new Prisma.Decimal(0));
+    }
 
     const totalEarned = hourlyEarnings.add(pieceworkEarnings);
 
@@ -69,8 +77,12 @@ export class PaymentService {
 
     return successRes(
       {
-        hourly: { totalHours, hourlyRate, hourlyEarnings },
-        piecework: { completedCount: completedAssignments.length, pieceworkEarnings },
+        payType: user.payType,
+        hourly: user.payType === 'HOURLY' ? { totalHours, hourlyRate, hourlyEarnings } : null,
+        piecework:
+          user.payType === 'PIECE_RATE'
+            ? { completedCount: completedAssignments.length, pieceworkEarnings }
+            : null,
         totalEarned,
         totalPaid,
         balance: totalEarned.sub(totalPaid),

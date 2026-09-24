@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsInt,
   IsPositive,
+  IsNumber,
   MaxLength,
   IsOptional,
   IsArray,
@@ -30,6 +31,15 @@ export class CreateModelOperationInputDto {
   @IsInt()
   @IsPositive()
   stepOrder: number;
+
+  @ApiProperty({
+    example: 2500,
+    description: 'Shu operatsiyaning bir dona uchun narxi (sdelno ishchilar uchun).',
+    type: Number,
+  })
+  @IsNumber()
+  @IsPositive()
+  pricePerUnit: number;
 }
 
 export class CreateModelMaterialInputDto {

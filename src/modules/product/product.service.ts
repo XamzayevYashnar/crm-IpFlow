@@ -26,6 +26,7 @@ export class ProductService {
             ? {
                 create: dto.operations.map((op) => ({
                   stepOrder: op.stepOrder,
+                  pricePerUnit: op.pricePerUnit,
                   operation: { connect: { id: op.operationId } },
                 })),
               }
@@ -101,6 +102,7 @@ export class ProductService {
               ? {
                   create: dto.operations.map((op) => ({
                     stepOrder: op.stepOrder,
+                    pricePerUnit: op.pricePerUnit,
                     operation: { connect: { id: op.operationId } },
                   })),
                 }

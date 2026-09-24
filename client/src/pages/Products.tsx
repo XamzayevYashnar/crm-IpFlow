@@ -95,7 +95,7 @@ export default function Products() {
                       : p.modelOperations
                           .slice()
                           .sort((a, b) => a.stepOrder - b.stepOrder)
-                          .map((mo) => `${mo.stepOrder}. ${mo.operation.name}`)
+                          .map((mo) => `${mo.stepOrder}. ${mo.operation.name} (${mo.pricePerUnit ?? 0} so'm)`)
                           .join(", ")}
                   </td>
                   <td className="px-4 py-3 text-slate-600">
@@ -165,7 +165,11 @@ function ProductFormModal({
       operations: product?.modelOperations
         .slice()
         .sort((a, b) => a.stepOrder - b.stepOrder)
-        .map((mo) => ({ operationId: mo.operationId, stepOrder: mo.stepOrder })) ?? [],
+        .map((mo) => ({
+          operationId: mo.operationId,
+          stepOrder: mo.stepOrder,
+          pricePerUnit: mo.pricePerUnit ? Number(mo.pricePerUnit) : 0,
+        })) ?? [],
       materials: product?.modelMaterials.map((mm) => ({
         materialId: mm.materialId,
         quantityNeeded: Number(mm.quantityNeeded),
@@ -181,7 +185,11 @@ function ProductFormModal({
       name: values.name,
       sku: values.sku,
       operations: values.operations?.length
-        ? values.operations.map((o) => ({ operationId: Number(o.operationId), stepOrder: Number(o.stepOrder) }))
+        ? values.operations.map((o) => ({
+            operationId: Number(o.operationId),
+            stepOrder: Number(o.stepOrder),
+            pricePerUnit: Number(o.pricePerUnit),
+          }))
         : undefined,
       materials: values.materials?.length
         ? values.materials.map((m) => ({ materialId: Number(m.materialId), quantityNeeded: Number(m.quantityNeeded) }))
@@ -227,7 +235,9 @@ function ProductFormModal({
             <label className="text-sm font-medium text-slate-700">Operatsiyalar (ketma-ketlik bo'yicha)</label>
             <button
               type="button"
-              onClick={() => opFields.append({ operationId: operations[0]?.id ?? 0, stepOrder: opFields.fields.length + 1 })}
+              onClick={() =>
+                opFields.append({ operationId: operations[0]?.id ?? 0, stepOrder: opFields.fields.length + 1, pricePerUnit: 0 })
+              }
               className="text-xs font-medium text-blue-600 hover:underline"
             >
               + qo'shish
@@ -250,8 +260,17 @@ function ProductFormModal({
                   type="number"
                   min={1}
                   placeholder="Tartib"
-                  className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                  className="w-16 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
                   {...register(`operations.${idx}.stepOrder`, { valueAsNumber: true, required: true })}
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Narxi"
+                  title="Bir dona uchun narx (so'm)"
+                  className="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                  {...register(`operations.${idx}.pricePerUnit`, { valueAsNumber: true, required: true })}
                 />
                 <button type="button" onClick={() => opFields.remove(idx)} className="text-slate-400 hover:text-red-600">
                   <X size={16} />
@@ -259,6 +278,9 @@ function ProductFormModal({
               </div>
             ))}
             {opFields.fields.length === 0 && <p className="text-xs text-slate-400">Operatsiya qo'shilmagan</p>}
+            {opFields.fields.length > 0 && (
+              <p className="text-xs text-slate-400">Tartib — bajarilish ketma-ketligi, Narxi — bir dona uchun (sdelno hisob uchun)</p>
+            )}
           </div>
         </div>
 

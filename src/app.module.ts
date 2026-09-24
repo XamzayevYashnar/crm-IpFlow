@@ -15,6 +15,8 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { OrderModule } from './modules/order/order.module';
 import { OrderBatchModule } from './modules/order-batch/order-batch.module';
+import { ColorModule } from './modules/color/color.module';
+import { SizeModule } from './modules/size/size.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { OrderBatchModule } from './modules/order-batch/order-batch.module';
     CustomerModule,
     OrderModule,
     OrderBatchModule,
+    ColorModule,
+    SizeModule,
   ],
 })
 export class AppModule {}

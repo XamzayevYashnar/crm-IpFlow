@@ -22,6 +22,8 @@ export class WorkAssignmentService {
             },
           },
         },
+        color: true,
+        size: true,
         workAssignments: true,
       },
     });
@@ -63,8 +65,8 @@ export class WorkAssignmentService {
             modelOperationId: op.id,
             operationName: op.operation.name,
             modelName: batch.order.productModel.name,
-            color: batch.color,
-            size: batch.size,
+            color: batch.color.name,
+            size: batch.size.name,
             available: availableQty,
           });
         }
@@ -204,12 +206,21 @@ export class WorkAssignmentService {
     const assignments = await this.prisma.workAssignment.findMany({
       where: { userId },
       include: {
-        orderBatch: true,
+        orderBatch: { include: { color: true, size: true } },
         modelOperation: { include: { operation: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return successRes({ assignments }, 200);
+    const shaped = assignments.map((wa) => ({
+      ...wa,
+      orderBatch: {
+        ...wa.orderBatch,
+        color: wa.orderBatch.color.name,
+        size: wa.orderBatch.size.name,
+      },
+    }));
+
+    return successRes({ assignments: shaped }, 200);
   }
 }

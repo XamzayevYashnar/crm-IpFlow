@@ -31,6 +31,7 @@ export interface ProductModel {
 export interface ProductOperationInput {
   operationId: number;
   stepOrder: number;
+  pricePerUnit: number;
 }
 
 export interface ProductMaterialInput {

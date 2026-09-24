@@ -1,7 +1,6 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { OrderBatchService } from './order-batch.service';
-import { CreateOrderBatchDto } from './dto/create-order-batch.dto';
 import { UpdateBatchStatusDto } from './dto/update-status.dto';
 import { JwtAuthGuard } from '../../common/guard/jwt-auth.guard';
 import { RolesGuard } from '../../common/guard/roles.guard';
@@ -14,11 +13,6 @@ import { Role } from '../../../generated/prisma/enums';
 @Controller('order-batch')
 export class OrderBatchController {
   constructor(private readonly service: OrderBatchService) {}
-
-  @Post()
-  create(@Body() dto: CreateOrderBatchDto) {
-    return this.service.create(dto);
-  }
 
   @Get()
   findAll() {

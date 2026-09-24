@@ -295,22 +295,28 @@ function SalaryTab() {
         <StatCard label="Jami ishlangan" value={`${earnings.totalEarned} so'm`} highlight />
         <StatCard label="To'langan" value={`${earnings.totalPaid} so'm`} />
         <StatCard label="Qoldiq" value={`${earnings.balance} so'm`} />
-        <StatCard label="Bajarilgan operatsiyalar" value={String(earnings.piecework.completedCount)} />
+        {earnings.piecework && (
+          <StatCard label="Bajarilgan operatsiyalar" value={String(earnings.piecework.completedCount)} />
+        )}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-card border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-sm font-medium text-slate-900">Soatlik</div>
-          <div className="mt-1 text-xs text-slate-500">
-            {earnings.hourly.totalHours} soat × {earnings.hourly.hourlyRate} so'm
+        {earnings.hourly && (
+          <div className="rounded-card border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-sm font-medium text-slate-900">Soatlik</div>
+            <div className="mt-1 text-xs text-slate-500">
+              {earnings.hourly.totalHours} soat × {earnings.hourly.hourlyRate} so'm
+            </div>
+            <div className="mt-2 text-lg font-semibold text-slate-900">{earnings.hourly.hourlyEarnings} so'm</div>
           </div>
-          <div className="mt-2 text-lg font-semibold text-slate-900">{earnings.hourly.hourlyEarnings} so'm</div>
-        </div>
-        <div className="rounded-card border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-sm font-medium text-slate-900">Sdelka (operatsiya bo'yicha)</div>
-          <div className="mt-1 text-xs text-slate-500">{earnings.piecework.completedCount} ta bajarilgan</div>
-          <div className="mt-2 text-lg font-semibold text-slate-900">{earnings.piecework.pieceworkEarnings} so'm</div>
-        </div>
+        )}
+        {earnings.piecework && (
+          <div className="rounded-card border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="text-sm font-medium text-slate-900">Sdelka (operatsiya bo'yicha)</div>
+            <div className="mt-1 text-xs text-slate-500">{earnings.piecework.completedCount} ta bajarilgan</div>
+            <div className="mt-2 text-lg font-semibold text-slate-900">{earnings.piecework.pieceworkEarnings} so'm</div>
+          </div>
+        )}
       </div>
 
       <div>

@@ -57,6 +57,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 generated/
 
+# local Redis snapshot
+dump.rdb
+
 # accidental nested duplicate clone
 /crm-IpFlow/
 

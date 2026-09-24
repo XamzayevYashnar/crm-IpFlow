@@ -17,7 +17,6 @@ export const navGroups: NavGroup[] = [
     title: "Buyurtmalar",
     items: [
       { label: "Buyurtmalar", to: "/orders", ready: true },
-      { label: "Partiyalar", to: "/batches", ready: true },
       { label: "Mijozlar", to: "/customers", ready: true },
     ],
   },
@@ -46,6 +45,7 @@ export const navGroups: NavGroup[] = [
   {
     title: "Boshqaruv",
     items: [
+      { label: "Sozlamalar", to: "/settings", ready: true },
       { label: "Rollar", to: "/roles", ready: false },
       { label: "Ruxsatlar", to: "/permissions", ready: false },
     ],

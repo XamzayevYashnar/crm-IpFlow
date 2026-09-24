@@ -38,8 +38,9 @@ export interface Payment {
 }
 
 export interface Earnings {
-  hourly: { totalHours: string; hourlyRate: string; hourlyEarnings: string };
-  piecework: { completedCount: number; pieceworkEarnings: string };
+  payType: "HOURLY" | "PIECE_RATE";
+  hourly: { totalHours: string; hourlyRate: string; hourlyEarnings: string } | null;
+  piecework: { completedCount: number; pieceworkEarnings: string } | null;
   totalEarned: string;
   totalPaid: string;
   balance: string;

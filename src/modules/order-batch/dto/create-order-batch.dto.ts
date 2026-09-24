@@ -1,24 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsPositive, IsString, MaxLength } from 'class-validator';
+import { IsInt, IsNotEmpty, IsPositive } from 'class-validator';
 
-export class CreateOrderBatchDto {
-  @ApiProperty({ example: 1 })
+export class CreateOrderBatchInputDto {
+  @ApiProperty({ example: 1, description: "Rang spravochnikdagi ID (Sozlamalar bo'limi)" })
   @IsNotEmpty()
   @IsInt()
   @IsPositive()
-  orderId: number;
+  colorId: number;
 
-  @ApiProperty({ example: 'Qora' })
+  @ApiProperty({ example: 1, description: "O'lcham spravochnikdagi ID (Sozlamalar bo'limi)" })
   @IsNotEmpty()
-  @IsString()
-  @MaxLength(50)
-  color: string;
-
-  @ApiProperty({ example: 'M' })
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(30)
-  size: string;
+  @IsInt()
+  @IsPositive()
+  sizeId: number;
 
   @ApiProperty({ example: 100 })
   @IsNotEmpty()

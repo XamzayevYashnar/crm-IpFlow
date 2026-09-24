@@ -55,7 +55,8 @@ export class WorkerService {
         pinLookup,
         roleId: staffRole.id,
         status: UserStatus.ACTIVE,
-        hourlyPrice: dto.hourlyPrice,
+        payType: dto.payType,
+        hourlyPrice: dto.payType === 'HOURLY' ? dto.hourlyPrice : undefined,
       },
     });
 
@@ -76,6 +77,7 @@ export class WorkerService {
         fullName: true,
         phone: true,
         status: true,
+        payType: true,
         hourlyPrice: true,
         createdAt: true,
       },
@@ -93,6 +95,7 @@ export class WorkerService {
         fullName: true,
         phone: true,
         status: true,
+        payType: true,
         hourlyPrice: true,
         createdAt: true,
         updatedAt: true,
@@ -131,7 +134,8 @@ export class WorkerService {
       data: {
         fullName,
         phone: dto.phone,
-        hourlyPrice: dto.hourlyPrice,
+        payType: dto.payType,
+        hourlyPrice: dto.payType === 'PIECE_RATE' ? null : dto.hourlyPrice,
         status: dto.status,
       },
       select: {
@@ -139,6 +143,7 @@ export class WorkerService {
         fullName: true,
         phone: true,
         status: true,
+        payType: true,
         hourlyPrice: true,
         updatedAt: true,
       },

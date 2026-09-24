@@ -12,6 +12,9 @@ import { WorkerModule } from './modules/worker/worker.module';
 import { TerminalModule } from './modules/terminal/terminal.module';
 import { WorkAssignmentModule } from './modules/work-assignment/work-assignment.module';
 import { PaymentModule } from './modules/payment/payment.module';
+import { CustomerModule } from './modules/customer/customer.module';
+import { OrderModule } from './modules/order/order.module';
+import { OrderBatchModule } from './modules/order-batch/order-batch.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { PaymentModule } from './modules/payment/payment.module';
     TerminalModule,
     WorkAssignmentModule,
     PaymentModule,
+    CustomerModule,
+    OrderModule,
+    OrderBatchModule,
   ],
 })
 export class AppModule {}

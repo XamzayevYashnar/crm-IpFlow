@@ -12,6 +12,9 @@ import Employees from "./pages/Employees";
 import Workers from "./pages/Workers";
 import Products from "./pages/Products";
 import Operations from "./pages/Operations";
+import Customers from "./pages/Customers";
+import Orders from "./pages/Orders";
+import Batches from "./pages/Batches";
 import TerminalLogin from "./pages/terminal/TerminalLogin";
 import TerminalHome from "./pages/terminal/TerminalHome";
 
@@ -48,6 +51,9 @@ export default function App() {
                     <Route path="/workers" element={<Workers />} />
                     <Route path="/models" element={<Products />} />
                     <Route path="/operations" element={<Operations />} />
+                    <Route path="/customers" element={<Customers />} />
+                    <Route path="/orders" element={<Orders />} />
+                    <Route path="/batches" element={<Batches />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

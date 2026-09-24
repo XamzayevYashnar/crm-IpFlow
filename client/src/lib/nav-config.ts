@@ -16,9 +16,9 @@ export const navGroups: NavGroup[] = [
   {
     title: "Buyurtmalar",
     items: [
-      { label: "Buyurtmalar", to: "/orders", ready: false },
-      { label: "Partiyalar", to: "/batches", ready: false },
-      { label: "Mijozlar", to: "/customers", ready: false },
+      { label: "Buyurtmalar", to: "/orders", ready: true },
+      { label: "Partiyalar", to: "/batches", ready: true },
+      { label: "Mijozlar", to: "/customers", ready: true },
     ],
   },
   {
